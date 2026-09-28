@@ -1,14 +1,17 @@
 package com.vi7p.autoiron;
 
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.entity.EquipmentSlot;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
 
-public class AutoIronMod implements ModInitializer {
+public class AutoIronMod implements ClientModInitializer {
+
+    private static final int CHECK_INTERVAL = 20;
+
+    private static int tickCounter = 0;
 
     private static final Item[] REQUIRED_TOOLS = {
             Items.IRON_SWORD,
@@ -17,77 +20,145 @@ public class AutoIronMod implements ModInitializer {
             Items.IRON_SHOVEL
     };
 
+    private static final Item[] REQUIRED_ARMOR = {
+            Items.IRON_HELMET,
+            Items.IRON_CHESTPLATE,
+            Items.IRON_LEGGINGS,
+            Items.IRON_BOOTS
+    };
+
     @Override
-    public void onInitialize() {
-        System.out.println("[AutoIron] Auto Iron Mod loaded!");
+    public void onInitializeClient() {
 
-        ServerTickEvents.END_SERVER_TICK.register(server -> {
-            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
+        System.out.println("[AutoIron] Client Auto Iron loaded!");
 
-                if (player.isSpectator() || player.isCreative()) {
-                    continue;
-                }
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
 
-                giveMissingArmor(player);
-                giveMissingTools(player);
+            if (client.player == null ||
+                    client.world == null ||
+                    client.getNetworkHandler() == null) {
+                return;
             }
+
+            tickCounter++;
+
+            if (tickCounter < CHECK_INTERVAL) {
+                return;
+            }
+
+            tickCounter = 0;
+
+            checkArmor(client);
+            checkTools(client);
         });
     }
 
-    private static void giveMissingArmor(ServerPlayerEntity player) {
-        giveArmor(player, EquipmentSlot.HEAD, Items.IRON_HELMET);
-        giveArmor(player, EquipmentSlot.CHEST, Items.IRON_CHESTPLATE);
-        giveArmor(player, EquipmentSlot.LEGS, Items.IRON_LEGGINGS);
-        giveArmor(player, EquipmentSlot.FEET, Items.IRON_BOOTS);
-    }
+    private static void checkArmor(MinecraftClient client) {
 
-    private static void giveArmor(
-            ServerPlayerEntity player,
-            EquipmentSlot slot,
-            Item item
-    ) {
-        ItemStack equipped = player.getEquippedStack(slot);
-
-        if (!equipped.isEmpty() && equipped.isOf(item)) {
-            return;
+        if (!hasArmor(client, Items.IRON_HELMET)) {
+            give(client, "minecraft:iron_helmet");
         }
 
-        player.equipStack(slot, new ItemStack(item));
+        if (!hasArmor(client, Items.IRON_CHESTPLATE)) {
+            give(client, "minecraft:iron_chestplate");
+        }
+
+        if (!hasArmor(client, Items.IRON_LEGGINGS)) {
+            give(client, "minecraft:iron_leggings");
+        }
+
+        if (!hasArmor(client, Items.IRON_BOOTS)) {
+            give(client, "minecraft:iron_boots");
+        }
     }
 
-    private static void giveMissingTools(ServerPlayerEntity player) {
+    private static void checkTools(MinecraftClient client) {
 
-        for (Item requiredTool : REQUIRED_TOOLS) {
+        for (Item tool : REQUIRED_TOOLS) {
 
-            if (!hasTool(player, requiredTool)) {
-                player.giveItemStack(new ItemStack(requiredTool));
+            if (!hasItem(client, tool)) {
+                give(client, getItemId(tool));
             }
         }
     }
 
-    private static boolean hasTool(
-            ServerPlayerEntity player,
-            Item requiredTool
+    private static boolean hasArmor(
+            MinecraftClient client,
+            Item item
     ) {
-        // Main inventory + hotbar
-        for (ItemStack stack : player.getInventory().getMainStacks()) {
-            if (!stack.isEmpty() && stack.isOf(requiredTool)) {
+
+        for (ItemStack stack :
+                client.player.getInventory().getArmorStacks()) {
+
+            if (!stack.isEmpty() && stack.isOf(item)) {
                 return true;
             }
         }
 
-        // Check the currently equipped main-hand item
-        ItemStack mainHand = player.getMainHandStack();
-        if (!mainHand.isEmpty() && mainHand.isOf(requiredTool)) {
-            return true;
+        return false;
+    }
+
+    private static boolean hasItem(
+            MinecraftClient client,
+            Item item
+    ) {
+
+        // Main inventory + hotbar
+        for (ItemStack stack :
+                client.player.getInventory().getMainStacks()) {
+
+            if (!stack.isEmpty() && stack.isOf(item)) {
+                return true;
+            }
         }
 
-        // Check off-hand
-        ItemStack offHand = player.getOffHandStack();
-        if (!offHand.isEmpty() && offHand.isOf(requiredTool)) {
+        // Off-hand
+        ItemStack offHand =
+                client.player.getOffHandStack();
+
+        if (!offHand.isEmpty() && offHand.isOf(item)) {
             return true;
         }
 
         return false;
+    }
+
+    private static void give(
+            MinecraftClient client,
+            String item
+    ) {
+
+        if (client.getNetworkHandler() == null) {
+            return;
+        }
+
+        client.getNetworkHandler().sendChatCommand(
+                "give @s " + item
+        );
+
+        System.out.println(
+                "[AutoIron] Requested: " + item
+        );
+    }
+
+    private static String getItemId(Item item) {
+
+        if (item == Items.IRON_SWORD) {
+            return "minecraft:iron_sword";
+        }
+
+        if (item == Items.IRON_PICKAXE) {
+            return "minecraft:iron_pickaxe";
+        }
+
+        if (item == Items.IRON_AXE) {
+            return "minecraft:iron_axe";
+        }
+
+        if (item == Items.IRON_SHOVEL) {
+            return "minecraft:iron_shovel";
+        }
+
+        return "minecraft:air";
     }
 }
