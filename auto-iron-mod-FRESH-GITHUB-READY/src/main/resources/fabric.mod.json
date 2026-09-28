@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "autoiron",
+  "version": "${version}",
+  "name": "Auto Iron",
+  "description": "Automatically restores a complete iron equipment set.",
+  "authors": ["vi7p"],
+  "license": "CC0-1.0",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.vi7p.autoiron.AutoIronMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "fabric-api": ">=0.138.4",
+    "minecraft": "~1.21.10",
+    "java": ">=21"
+  }
+}
