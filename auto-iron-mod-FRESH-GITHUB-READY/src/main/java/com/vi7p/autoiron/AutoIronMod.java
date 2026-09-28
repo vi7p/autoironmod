@@ -3,6 +3,7 @@ package com.vi7p.autoiron;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -10,7 +11,6 @@ import net.minecraft.item.Items;
 public class AutoIronMod implements ClientModInitializer {
 
     private static final int CHECK_INTERVAL = 20;
-
     private static int tickCounter = 0;
 
     private static final Item[] REQUIRED_TOOLS = {
@@ -18,13 +18,6 @@ public class AutoIronMod implements ClientModInitializer {
             Items.IRON_PICKAXE,
             Items.IRON_AXE,
             Items.IRON_SHOVEL
-    };
-
-    private static final Item[] REQUIRED_ARMOR = {
-            Items.IRON_HELMET,
-            Items.IRON_CHESTPLATE,
-            Items.IRON_LEGGINGS,
-            Items.IRON_BOOTS
     };
 
     @Override
@@ -55,20 +48,47 @@ public class AutoIronMod implements ClientModInitializer {
 
     private static void checkArmor(MinecraftClient client) {
 
-        if (!hasArmor(client, Items.IRON_HELMET)) {
-            give(client, "minecraft:iron_helmet");
-        }
+        checkArmorPiece(
+                client,
+                EquipmentSlot.HEAD,
+                Items.IRON_HELMET,
+                "minecraft:iron_helmet"
+        );
 
-        if (!hasArmor(client, Items.IRON_CHESTPLATE)) {
-            give(client, "minecraft:iron_chestplate");
-        }
+        checkArmorPiece(
+                client,
+                EquipmentSlot.CHEST,
+                Items.IRON_CHESTPLATE,
+                "minecraft:iron_chestplate"
+        );
 
-        if (!hasArmor(client, Items.IRON_LEGGINGS)) {
-            give(client, "minecraft:iron_leggings");
-        }
+        checkArmorPiece(
+                client,
+                EquipmentSlot.LEGS,
+                Items.IRON_LEGGINGS,
+                "minecraft:iron_leggings"
+        );
 
-        if (!hasArmor(client, Items.IRON_BOOTS)) {
-            give(client, "minecraft:iron_boots");
+        checkArmorPiece(
+                client,
+                EquipmentSlot.FEET,
+                Items.IRON_BOOTS,
+                "minecraft:iron_boots"
+        );
+    }
+
+    private static void checkArmorPiece(
+            MinecraftClient client,
+            EquipmentSlot slot,
+            Item item,
+            String itemId
+    ) {
+
+        ItemStack equipped =
+                client.player.getEquippedStack(slot);
+
+        if (equipped.isEmpty() || !equipped.isOf(item)) {
+            give(client, itemId);
         }
     }
 
@@ -80,22 +100,6 @@ public class AutoIronMod implements ClientModInitializer {
                 give(client, getItemId(tool));
             }
         }
-    }
-
-    private static boolean hasArmor(
-            MinecraftClient client,
-            Item item
-    ) {
-
-        for (ItemStack stack :
-                client.player.getInventory().getArmorStacks()) {
-
-            if (!stack.isEmpty() && stack.isOf(item)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static boolean hasItem(
