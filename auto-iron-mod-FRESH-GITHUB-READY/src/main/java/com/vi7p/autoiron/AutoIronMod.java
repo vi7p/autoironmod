@@ -12,20 +12,6 @@ public class AutoIronMod implements ClientModInitializer {
     private static final int CHECK_INTERVAL = 20;
     private static int tickCounter = 0;
 
-    private static final Item[] REQUIRED_ARMOR = {
-            Items.IRON_HELMET,
-            Items.IRON_CHESTPLATE,
-            Items.IRON_LEGGINGS,
-            Items.IRON_BOOTS
-    };
-
-    private static final Item[] REQUIRED_TOOLS = {
-            Items.IRON_SWORD,
-            Items.IRON_PICKAXE,
-            Items.IRON_AXE,
-            Items.IRON_SHOVEL
-    };
-
     @Override
     public void onInitializeClient() {
 
@@ -95,30 +81,25 @@ public class AutoIronMod implements ClientModInitializer {
             Item item
     ) {
 
-        // Main inventory + hotbar
-        for (ItemStack stack :
-                client.player.getInventory().getMainStacks()) {
+        /*
+         * Inventory slots:
+         *
+         * 0-8   = hotbar
+         * 9-35  = main inventory
+         * 36-39 = armor
+         * 40    = off-hand
+         *
+         * We check ALL of them.
+         */
+
+        for (int slot = 0; slot <= 40; slot++) {
+
+            ItemStack stack =
+                    client.player.getInventory().getStack(slot);
 
             if (!stack.isEmpty() && stack.isOf(item)) {
                 return true;
             }
-        }
-
-        // Armour slots
-        for (ItemStack stack :
-                client.player.getInventory().getArmorStacks()) {
-
-            if (!stack.isEmpty() && stack.isOf(item)) {
-                return true;
-            }
-        }
-
-        // Off-hand
-        ItemStack offHand =
-                client.player.getOffHandStack();
-
-        if (!offHand.isEmpty() && offHand.isOf(item)) {
-            return true;
         }
 
         return false;
