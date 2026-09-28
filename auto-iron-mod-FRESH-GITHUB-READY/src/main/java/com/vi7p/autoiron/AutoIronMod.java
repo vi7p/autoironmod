@@ -3,7 +3,6 @@ package com.vi7p.autoiron;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -12,6 +11,13 @@ public class AutoIronMod implements ClientModInitializer {
 
     private static final int CHECK_INTERVAL = 20;
     private static int tickCounter = 0;
+
+    private static final Item[] REQUIRED_ARMOR = {
+            Items.IRON_HELMET,
+            Items.IRON_CHESTPLATE,
+            Items.IRON_LEGGINGS,
+            Items.IRON_BOOTS
+    };
 
     private static final Item[] REQUIRED_TOOLS = {
             Items.IRON_SWORD,
@@ -48,57 +54,39 @@ public class AutoIronMod implements ClientModInitializer {
 
     private static void checkArmor(MinecraftClient client) {
 
-        checkArmorPiece(
-                client,
-                EquipmentSlot.HEAD,
-                Items.IRON_HELMET,
-                "minecraft:iron_helmet"
-        );
+        if (!hasItem(client, Items.IRON_HELMET)) {
+            give(client, "minecraft:iron_helmet");
+        }
 
-        checkArmorPiece(
-                client,
-                EquipmentSlot.CHEST,
-                Items.IRON_CHESTPLATE,
-                "minecraft:iron_chestplate"
-        );
+        if (!hasItem(client, Items.IRON_CHESTPLATE)) {
+            give(client, "minecraft:iron_chestplate");
+        }
 
-        checkArmorPiece(
-                client,
-                EquipmentSlot.LEGS,
-                Items.IRON_LEGGINGS,
-                "minecraft:iron_leggings"
-        );
+        if (!hasItem(client, Items.IRON_LEGGINGS)) {
+            give(client, "minecraft:iron_leggings");
+        }
 
-        checkArmorPiece(
-                client,
-                EquipmentSlot.FEET,
-                Items.IRON_BOOTS,
-                "minecraft:iron_boots"
-        );
-    }
-
-    private static void checkArmorPiece(
-            MinecraftClient client,
-            EquipmentSlot slot,
-            Item item,
-            String itemId
-    ) {
-
-        ItemStack equipped =
-                client.player.getEquippedStack(slot);
-
-        if (equipped.isEmpty() || !equipped.isOf(item)) {
-            give(client, itemId);
+        if (!hasItem(client, Items.IRON_BOOTS)) {
+            give(client, "minecraft:iron_boots");
         }
     }
 
     private static void checkTools(MinecraftClient client) {
 
-        for (Item tool : REQUIRED_TOOLS) {
+        if (!hasItem(client, Items.IRON_SWORD)) {
+            give(client, "minecraft:iron_sword");
+        }
 
-            if (!hasItem(client, tool)) {
-                give(client, getItemId(tool));
-            }
+        if (!hasItem(client, Items.IRON_PICKAXE)) {
+            give(client, "minecraft:iron_pickaxe");
+        }
+
+        if (!hasItem(client, Items.IRON_AXE)) {
+            give(client, "minecraft:iron_axe");
+        }
+
+        if (!hasItem(client, Items.IRON_SHOVEL)) {
+            give(client, "minecraft:iron_shovel");
         }
     }
 
@@ -110,6 +98,15 @@ public class AutoIronMod implements ClientModInitializer {
         // Main inventory + hotbar
         for (ItemStack stack :
                 client.player.getInventory().getMainStacks()) {
+
+            if (!stack.isEmpty() && stack.isOf(item)) {
+                return true;
+            }
+        }
+
+        // Armour slots
+        for (ItemStack stack :
+                client.player.getInventory().getArmorStacks()) {
 
             if (!stack.isEmpty() && stack.isOf(item)) {
                 return true;
@@ -143,26 +140,5 @@ public class AutoIronMod implements ClientModInitializer {
         System.out.println(
                 "[AutoIron] Requested: " + item
         );
-    }
-
-    private static String getItemId(Item item) {
-
-        if (item == Items.IRON_SWORD) {
-            return "minecraft:iron_sword";
-        }
-
-        if (item == Items.IRON_PICKAXE) {
-            return "minecraft:iron_pickaxe";
-        }
-
-        if (item == Items.IRON_AXE) {
-            return "minecraft:iron_axe";
-        }
-
-        if (item == Items.IRON_SHOVEL) {
-            return "minecraft:iron_shovel";
-        }
-
-        return "minecraft:air";
     }
 }
